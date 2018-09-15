@@ -4,6 +4,7 @@ import time
 import numpy as np
 import mpl_toolkits.mplot3d.axes3d as axes3d
 import matplotlib.animation as animation
+import matplotlib.gridspec as gridspec
 import WalabotAPI
 
 
@@ -28,9 +29,11 @@ class Walabot:
                 time.sleep(1)
 
     def calibrate(self):
+        print('Starting calibration...')
         self.wa.StartCalibration()
         while self.wa.GetStatus()[0] == self.wa.STATUS_CALIBRATING:
             self.wa.Trigger()
+        print('Calibration finished.')
 
     def start(self):
         self.wa.Start()
@@ -49,25 +52,29 @@ class Walabot:
 
     def getRawData(self):
         self.wa.Trigger()
-        raster, X, Y, Z, power = self.wa.GetRawImage()
-        return raster, X, Y, Z
+        raster, x, y, z, power = self.wa.GetRawImage()
+        energy = self.wa.GetImageEnergy()
+        return raster, x, y, z, energy
+
+    def getRawSlice(self):
+        self.wa.Trigger()
+        return self.wa.GetRawImageSlice()[0] # Only return the raster image
 
 
 class LivePlot:
     def __init__(self):
         self.fig = plt.figure()
-        self.ax = self.fig.add_subplot(111, projection='3d')
-        self.ax.set_xlabel(r'$x$')
-        self.ax.set_ylabel(r'$y$')
-        self.ax.set_zlabel(r'$z$')
 
-    def animate(self, raw, interval=50):
-        def wrapper():
-            self.ax.clear()
-            self.plot(*raw)
-        animation.FuncAnimation(self.fig, wrapper, interval=interval)
+        self.ax1 = self.fig.add_subplot(121, projection='3d')
+        self.ax1.set_xlabel(r'$x$')
+        self.ax1.set_ylabel(r'$y$')
+        self.ax1.set_zlabel(r'$z$')
 
-    def plot(self, raster, rSize, tSize, pSize):
+        self.ax2 = self.fig.add_subplot(122)
+        self.maxEnergy = 0
+
+    def plot(self, raster, rSize, tSize, pSize, energy):
+
         r = raster[0]
         theta = raster[1]
         phi = raster[2]
@@ -77,28 +84,20 @@ class LivePlot:
         y = r * np.sin(theta) * np.sin(phi)
         z = r * np.cos(theta)
 
-        self.ax.plot_surface(x, y, z, cmap=plt.cm.YlGnBu_r)
+        self.maxEnergy = max(self.maxEnergy, energy)
 
-def plot(raster, rSize, tSize, pSize):
-    r = raster[0]
-    theta = raster[1]
-    phi = raster[2]
+        self.ax1.clear()
+        self.ax2.clear()
 
-    # Convert to cartesian coords
-    x = r*np.sin(theta)*np.cos(phi)
-    y = r*np.sin(theta)*np.sin(phi)
-    z = r*np.cos(theta)
+        #self.ax1.plot_surface(x, y, z, cmap=plt.cm.YlGnBu_r)
+        self.ax1.plot_wireframe(x, y, z, rstride=10, cstride=10)
+        self.ax1.set_xlim([-255, 255])
+        self.ax1.set_ylim([-255, 255])
+        self.ax1.set_zlim([-255, 255])
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.plot_surface(x, y, z, cmap=plt.cm.YlGnBu_r)
-
-    ax.set_xlabel(r'$x$')
-    ax.set_ylabel(r'$y$')
-    ax.set_zlabel(r'$z$')
-
-    plt.show()
-
+        self.ax2.bar(1, energy, width=0.5)
+        self.ax2.set_ylim([0, self.maxEnergy])
+        plt.pause(0.001)
 
 def main():
     wlbt = Walabot()
@@ -108,30 +107,56 @@ def main():
     tParams = (-20.0, 20.0, 10.0)
     pParams = (-45.0, 45.0, 2.0)
     threshold = 15
-    imgfilter = WalabotAPI.FILTER_TYPE_NONE
+    imgfilter = WalabotAPI.FILTER_TYPE_MTI
 
     wlbt.setParameters(rParams, tParams, pParams, threshold, imgfilter)
+    wlbt.calibrate()
     wlbt.start()
 
-    raster, rSize, tSize, pSize = wlbt.getRawData()
-    r = raster[0]
-    theta = raster[1]
-    phi = raster[2]
-    # Convert to cartesian coords
-    x = r * np.sin(theta) * np.cos(phi)
-    y = r * np.sin(theta) * np.sin(phi)
-    z = r * np.cos(theta)
+    live = LivePlot()
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
+    while True:
+        live.plot(*wlbt.getRawData())
 
-    for i in range(10000):
-        print(raster)
-    # for i in range(10000):
-    #     ax.clear()
-    #     ax.plot_surface(x, y, z, cmap=plt.cm.YlGnBu_r)
-    #     print('Plotting')
-    #     plt.pause(0.05)
+    # maxEnergy = 0.0
+    # raster, rSize, tSize, pSize, energy = wlbt.getRawData()
+    # theta = raster[0]
+    # phi = raster[1]
+    # r = raster[2]
+    #
+    # maxEnergy = max(energy, maxEnergy)
+    # # Convert to cartesian coords
+    # x = r * np.sin(theta) * np.cos(phi)
+    # y = r * np.sin(theta) * np.sin(phi)
+    # z = r * np.cos(theta)
+    #
+    # fig = plt.figure()
+    # ax1 = fig.add_subplot(121, projection='3d')
+    # ax1.set_xlim([0, 255])
+    # ax1.set_ylim([0, 255])
+    # ax1.set_zlim([0, 255])
+    # ax2 = fig.add_subplot(122)
+    # ax2.set_ylim([0, maxEnergy])
+
+    # while True:
+    #     ax1.clear()
+    #     ax2.clear()
+    #     raster, rSize, tSize, pSize, energy = wlbt.getRawData()
+    #     theta = raster[0]
+    #     phi = raster[1]
+    #     r = raster[2]
+    #     maxEnergy = max(energy, maxEnergy)
+    #     # Convert to cartesian coords
+    #     x = r * np.sin(theta) * np.cos(phi)
+    #     y = r * np.sin(theta) * np.sin(phi)
+    #     z = r * np.cos(theta)
+    #     ax1.plot_surface(x, y, z, cmap=plt.cm.YlGnBu_r)
+    #     ax1.set_xlim([-255, 255])
+    #     ax1.set_ylim([-255, 255])
+    #     ax1.set_zlim([-255, 255])
+    #     ax2.bar(1, energy, width=0.5)
+    #     ax2.set_ylim([0, maxEnergy])
+    #     plt.pause(0.001)
 
     plt.show()
 
