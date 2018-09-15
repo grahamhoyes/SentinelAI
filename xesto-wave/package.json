@@ -9,12 +9,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "babel": "^6.23.0",
-    "babel-core": "^6.26.3",
-    "babel-preset-env": "^1.7.0",
-    "webpack": "^4.19.0",
-    "webpack-cli": "^3.1.0",
-    "webpack-dev-server": "^3.1.8",
     "xesto-wave-npm": "0.0.121"
   }
 }

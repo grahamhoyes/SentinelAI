@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="0b7ae586-5b0b-4f01-9ae7-dc3742b7a50f" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-    </list>
+    <list default="true" id="0b7ae586-5b0b-4f01-9ae7-dc3742b7a50f" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -51,8 +49,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/xesto-wave/app.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="44">
-              <caret line="2" lean-forward="true" selection-start-line="2" selection-end-line="2" />
+            <state>
+              <caret selection-end-line="12" selection-end-column="3" />
             </state>
           </provider>
         </entry>
@@ -1238,11 +1236,6 @@
               <item name="SentinelAI" type="b2602c69:ProjectViewProjectNode" />
               <item name="SentinelAI" type="462c0819:PsiDirectoryNode" />
             </path>
-            <path>
-              <item name="SentinelAI" type="b2602c69:ProjectViewProjectNode" />
-              <item name="SentinelAI" type="462c0819:PsiDirectoryNode" />
-              <item name="xesto-wave" type="462c0819:PsiDirectoryNode" />
-            </path>
           </expand>
           <select />
         </subPane>
@@ -1334,8 +1327,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/xesto-wave/app.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="44">
-          <caret line="2" lean-forward="true" selection-start-line="2" selection-end-line="2" />
+        <state>
+          <caret selection-end-line="12" selection-end-column="3" />
         </state>
       </provider>
     </entry>
