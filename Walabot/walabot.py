@@ -6,7 +6,7 @@ import mpl_toolkits.mplot3d.axes3d as axes3d
 import matplotlib.animation as animation
 import matplotlib.gridspec as gridspec
 import WalabotAPI
-
+import scipy.misc
 
 class Walabot:
     """ Control the walabot sensor"""
@@ -163,11 +163,14 @@ class WalabotFace:
         self.wlbt = Walabot()
         self.wlbt.connect()
 
-        rParams = (10.0, 50.0, 0.6)
-        tParams = (-20.0, 20.0, 2.0)
-        pParams = (-32.0, 32.0, 1.0)
+        # rParams = (10.0, 50.0, 0.6)
+        # tParams = (-20.0, 20.0, 2.0)
+        # pParams = (-32.0, 32.0, 1.0)
+        rParams = (10.0, 100.0, 2.0)
+        tParams = (-20.0, 20.0, 10.0)
+        pParams = (-45.0, 45.0, 2.0)
         threshold = 15
-        imgfilter = WalabotAPI.FILTER_TYPE_MTI
+        imgfilter = WalabotAPI.FILTER_TYPE_NONE
 
         self.params = (rParams, tParams, pParams, threshold, imgfilter)
         self.wlbt.setParameters(*self.params)
@@ -184,10 +187,70 @@ class WalabotFace:
         while True:
             render.plot(*self.wlbt.getRawSlice())
 
+    def render3d(self):
+        render = LivePlot3D()
 
-    def scan(self):
-        return self.wlbt.getRawSlice()[0]
+        while True:
+            render.plot(*self.wlbt.getRawData())
 
+    def scan(self, n=64):
+        data = np.array(self.wlbt.getRawSlice()[0])
+        return data[0:n, 0:n]
+
+
+def walabotTrain():
+    w = WalabotFace()
+    basedir = os.path.join('faces', 'train')
+    for i in range(10):
+        print('Scanning real faces in ' + str(10-i))
+        time.sleep(1)
+
+    fh = open(os.path.join(basedir, 'labels.txt'), 'w+')
+    for i in range(50):
+        print('Scanning real face ' + str(i))
+        fname = 'face_real_' + str(i) + '.png'
+        fh.write(fname + ' 1\n')
+        plt.imsave(os.path.join(basedir, fname), w.scan())
+
+    for i in range(10):
+        print('Scanning fake faces in ' + str(10-i))
+        time.sleep(1)
+
+    for i in range(50):
+        print('Scanning fake face ' + str(i))
+        fname = 'face_fake_' + str(i) + '.png'
+        fh.write(fname + ' 0\n')
+        plt.imsave(os.path.join(basedir, fname), w.scan())
+
+    fh.close()
+    del w
+
+def walabotGenerateTestingData():
+    w = WalabotFace()
+    basedir = os.path.join('faces', 'test')
+    for i in range(10):
+        print('Scanning real faces in ' + str(10-i))
+        time.sleep(1)
+
+    fh = open(os.path.join(basedir, 'labels.txt'), 'w+')
+    for i in range(10):
+        print('Scanning real face ' + str(i))
+        fname = 'face_real_' + str(i) + '.png'
+        fh.write(fname + ' 1\n')
+        plt.imsave(os.path.join(basedir, fname), w.scan())
+
+    for i in range(10):
+        print('Scanning fake faces in ' + str(10-i))
+        time.sleep(1)
+
+    for i in range(10):
+        print('Scanning fake face ' + str(i))
+        fname = 'face_fake_' + str(i) + '.png'
+        fh.write(fname + ' 0\n')
+        plt.imsave(os.path.join(basedir, fname), w.scan())
+
+    fh.close()
+    del w
 
 def main():
     wlbt = Walabot()
@@ -206,8 +269,6 @@ def main():
     render3d = LivePlot3D()
     #render2d = LivePlot2D()
 
-    print(np.array(wlbt.getRawSlice()[0]).shape)
-
     while True:
         #render2d.plot(*wlbt.getRawSlice())
         render3d.plot(*wlbt.getRawData())
@@ -217,7 +278,7 @@ def main():
 
 
 if __name__ == '__main__':
+    #walabotGenerateTestingData()
     w = WalabotFace()
-    for i in range(10000):
-        print(w.scan())
-    del w
+    w.render3d()
+
