@@ -4,7 +4,7 @@ SentinelAI is a smart home device that uses facial recognition to open your door
 ## Features
 
 ## React Native App Development
-The Expo[https://expo.io/learn] client app was used for development. 
+The [Expo](https://expo.io/learn) client app was used for development. 
 
 To run the app locally, go into the react_app directory and run the following command:
 
