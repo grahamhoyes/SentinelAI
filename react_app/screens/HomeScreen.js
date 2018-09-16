@@ -17,9 +17,10 @@ export default class HomeScreen extends React.Component {
   // no content in header
   static navigationOptions = {
     header: null,
-  };
+  };  
 
   render() {
+    const { navigate } = this.props.navigation
     return (
       <View style={styles.container}>
         <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
@@ -45,12 +46,11 @@ export default class HomeScreen extends React.Component {
           <View style={styles.textContainer}>
             <Text style={styles.generalText}> Please choose one of the following options: </Text>
           </View>
-
           <View style={styles.textContainer}>
-            <Button title="Register New Person" color="#94e087"/>
+            <Button onPress={() => navigate('Register')} title="Register New User" color="#94e087"/>
           </View>
           <View style={styles.textContainer}>
-            <Button title="Registered People" color="#94e087"/>
+            <Button onPress={() => navigate('Registered')} title="Registered People" color="#94e087"/>
           </View>
           <View style={styles.textContainer}>
             <Button title="Delete Registered Person" color="#94e087"/>
