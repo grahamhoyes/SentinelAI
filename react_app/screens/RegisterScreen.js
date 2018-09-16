@@ -10,7 +10,8 @@ import {
   Button,
   Alert,
   encodedURIComponent,
-  TextInput
+  TextInput,
+  navigate
 } from 'react-native';
 
 import { WebBrowser } from 'expo';
@@ -26,10 +27,9 @@ export default class RegisterScreen extends React.Component {
   }
 
   _register(){
-    fetch(`https://sentinelai.mybluemix.net/request?name=${ this.state.new_person }`, { method: 'GET' });
+    fetch(`https://sentinelai.mybluemix.net/request?name=${ this.state.new_person }&delete=false`, { method: 'GET' });
     global.registered_people.push(this.state.new_person);
     Alert.alert(this.state.new_person + " has been registered!")
-    navigate('HomeScreen')
   }
 
   render() {

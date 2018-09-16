@@ -1,14 +1,14 @@
 {
   "expo": {
     "name": "SentinelAI",
-    "description": "A very interesting project.",
+    "description": "The SentielAI that works in parallel with the SentielAI door security system.",
     "slug": "SentinelAI",
-    "privacy": "public",
+    "privacy": "private",
     "sdkVersion": "30.0.0",
     "platforms": ["ios", "android"],
-    "version": "1.0.0",
+    "version": "0.0.1",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/sentinelAI.png",
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",

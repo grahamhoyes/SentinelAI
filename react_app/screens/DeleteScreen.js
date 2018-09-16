@@ -7,17 +7,30 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Button
+  Button,
+  Alert,
+  encodedURIComponent,
+  TextInput,
+  navigate
 } from 'react-native';
-import { WebBrowser } from 'expo';
 
+import { WebBrowser } from 'expo';
 import { MonoText } from '../components/StyledText';
 
-export default class HomeScreen extends React.Component {
-  // no content in header
-  static navigationOptions = {
-    header: null,
-  };  
+
+export default class RegisterScreen extends React.Component {
+  // header has go back arrow
+  constructor(props) {
+    super(props);
+    this.state = { delete_person: "" };
+    this._register = this._register.bind(this);
+  }
+
+  _register(){
+    fetch(`https://sentinelai.mybluemix.net/request?name=${ this.state.delete_person }&delete=true`, { method: 'GET' });
+    global.registered_people.splice( global.registered_people.indexOf(this.state.delete_person), 1);
+    Alert.alert(this.state.delete_person + " has been deleted.")
+  }
 
   render() {
     const { navigate } = this.props.navigation
@@ -35,27 +48,18 @@ export default class HomeScreen extends React.Component {
             />
           </View>
 
-          <View style={styles.getStartedContainer}>
-            <Text style={styles.title}>Welcome to SentinelAI</Text>
-
-            <Text style={[styles.getStartedText, styles.homeScreenFilename]}>
-              This app will enable you to add a new person to your home security system!
-            </Text>
-          </View>
-
           <View style={styles.textContainer}>
-            <Text style={styles.generalText}> Please choose one of the following options: </Text>
-          </View>
-          <View style={styles.textContainer}>
-            <Button onPress={() => navigate('Register')} title="Register New User" color="#94e087"/>
-          </View>
-          <View style={styles.textContainer}>
-            <Button onPress={() => navigate('Registered')} title="Registered People" color="#94e087"/>
-          </View>
-          <View style={styles.textContainer}>
-            <Button onPress={() => navigate('Delete')} title="Delete Registered Person" color="#94e087"/>
+            <Text style={styles.generalText}>Name: </Text>
+            <TextInput
+              style={{height: 40}}
+              placeholder="Please input the name of the user you wish to delete"
+              onChangeText={(delete_person) => this.setState({delete_person})}
+            />
           </View>
 
+          <View style={styles.textContainer}>
+            <Button onPress={this._register} title="Delete User" color="#94e087"/>
+          </View>
         </ScrollView>
 
         <View style={styles.tabBarInfoContainer}>

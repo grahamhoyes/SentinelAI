@@ -8,11 +8,13 @@ import RegisterScreen from '../screens/RegisterScreen';
 import LinksScreen from '../screens/LinksScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import RegisteredScreen from '../screens/RegisteredScreen';
+import DeleteScreen from '../screens/DeleteScreen';
 
 const HomeStack = createStackNavigator({
   Home: HomeScreen,
   Register: RegisterScreen,
-  Registered: RegisteredScreen
+  Registered: RegisteredScreen,
+  Delete: DeleteScreen
 });
 
 HomeStack.navigationOptions = {
