@@ -185,9 +185,6 @@ class WalabotFace:
         self.wlbt.calibrate()
         self.wlbt.start()
 
-    def __del__(self):
-        self.wlbt.stop()
-
     def render2d(self):
         render = LivePlot2D()
 
