@@ -33,6 +33,7 @@ class Walabot:
         self.wa.StartCalibration()
         while self.wa.GetStatus()[0] == self.wa.STATUS_CALIBRATING:
             self.wa.Trigger()
+        time.sleep(2)
         print('Calibration finished')
 
     def start(self):
@@ -53,6 +54,10 @@ class Walabot:
         self.wa.SetThreshold(threshold)
         self.wa.SetDynamicImageFilter(imgfilter)
 
+    def getEnergy(self):
+        self.wa.Trigger()
+        return self.wa.GetImageEnergy()
+
     def getRawData(self):
         self.wa.Trigger()
         raster, x, y, z, power = self.wa.GetRawImage()
@@ -63,7 +68,6 @@ class Walabot:
         self.wa.Trigger()
         # Return the image slice, its dimensions, and its energy
         raster, x, y = self.wa.GetRawImageSlice()[0:3]
-
         return raster, x, y, self.wa.GetImageEnergy()
 
 
@@ -119,7 +123,6 @@ class LivePlot2D:
         plt.pause(0.001)
 
 
-
 class LivePlot3D:
     def __init__(self):
         self.fig = plt.figure()
@@ -160,17 +163,22 @@ class LivePlot3D:
 
 class WalabotFace:
     def __init__(self):
+        self.backgroundCalibration = []
+        self.datalen = 10
+        self.backgroundStd = 0
+        self.backgroundMean = 0
+
         self.wlbt = Walabot()
         self.wlbt.connect()
 
-        # rParams = (10.0, 50.0, 0.6)
-        # tParams = (-20.0, 20.0, 2.0)
-        # pParams = (-32.0, 32.0, 1.0)
-        rParams = (10.0, 100.0, 2.0)
-        tParams = (-20.0, 20.0, 10.0)
-        pParams = (-45.0, 45.0, 2.0)
+        rParams = (10.0, 50.0, 0.6)
+        tParams = (-20.0, 20.0, 2.0)
+        pParams = (-32.0, 32.0, 1.0)
+        # rParams = (10.0, 30.0, 2.0)
+        # tParams = (-20.0, 20.0, 10.0)
+        # pParams = (-45.0, 45.0, 2.0)
         threshold = 15
-        imgfilter = WalabotAPI.FILTER_TYPE_NONE
+        imgfilter = WalabotAPI.FILTER_TYPE_MTI
 
         self.params = (rParams, tParams, pParams, threshold, imgfilter)
         self.wlbt.setParameters(*self.params)
@@ -197,8 +205,80 @@ class WalabotFace:
         data = np.array(self.wlbt.getRawSlice()[0])
         return data[0:n, 0:n]
 
+    def energy(self):
+        return self.wlbt.getEnergy()
 
-def walabotTrain():
+    def collectBaseline(self):
+        print('Scanning background...')
+        # percentComplete = 0
+        # frac = self.datalen/10
+        for i in range(self.datalen):
+            print(i)
+            # if i % frac == 0:
+            #     print(str(percentComplete) + '% complete')
+            #     percentComplete += 10
+            self.backgroundCalibration.append(self.energy())
+        print('Done scanning background...')
+        self.backgroundMean = np.mean(self.backgroundCalibration)
+        self.backgroundStd = np.std(self.backgroundCalibration)
+        calibrationData = np.array([self.datalen, self.backgroundMean, self.backgroundStd])
+        np.savetxt('calibrationData.txt', calibrationData)
+
+    def loadCalibrationData(self):
+        calibrationData = np.loadtxt('calibrationData.txt')
+        datalen = int(calibrationData[0])
+        backgroundMean = calibrationData[1]
+        backgroundStd = calibrationData[2]
+        return datalen, backgroundMean, backgroundStd
+
+    def recognize(self):
+        datalen, backgroundMean, backgroundStd = self.loadCalibrationData()
+        print('Detecting...')
+        data = []
+        # percentComplete = 0
+        # frac = self.datalen/10
+        for i in range(self.datalen):
+            # print(i)
+            # if i % frac == 0:
+            #     print(str(percentComplete) + '% complete')
+            #     percentComplete += 10
+            data.append(self.energy())
+        print('Done detecting')
+
+        data = np.array(data)
+
+        # print('Mean: ' + str(backgroundMean))
+        # print('std: ' + str(backgroundStd))
+        # print('datalen: ' + str(datalen))
+        # Calculate the test statistic
+
+        topthing = backgroundMean - data.mean()
+        firstbottom = np.square(backgroundStd)/float(datalen)
+        secondbottom = np.square(np.std(data))/float(len(data))
+        bottom = np.sqrt(firstbottom + secondbottom)
+        # print('f:', firstbottom)
+        # print('s:', secondbottom)
+        # print('b:', bottom)
+        t = topthing/bottom
+
+
+        # t = (backgroundMean - data.mean())/np.sqrt((np.square(backgroundStd)/datalen)+(np.square(np.std(data))/self.datalen))
+        # print('T value: ' + str(t))
+
+        # Generate the t distribution
+        s = np.random.standard_t(datalen-1, size=100000)
+
+        # Calculate the p value
+        p = np.sum(s < t) / float(len(s))
+        # print('P value: ' + str(p))
+        # print(p)
+        if p < 0.001:
+            return True
+        else:
+            return False
+
+
+def walabotGenerateTrainingData():
     w = WalabotFace()
     basedir = os.path.join('faces', 'train')
     for i in range(10):
@@ -227,16 +307,15 @@ def walabotTrain():
 
 def walabotGenerateTestingData():
     w = WalabotFace()
+
     basedir = os.path.join('faces', 'test')
     for i in range(10):
         print('Scanning real faces in ' + str(10-i))
         time.sleep(1)
 
-    fh = open(os.path.join(basedir, 'labels.txt'), 'w+')
     for i in range(10):
         print('Scanning real face ' + str(i))
         fname = 'face_real_' + str(i) + '.png'
-        fh.write(fname + ' 1\n')
         plt.imsave(os.path.join(basedir, fname), w.scan())
 
     for i in range(10):
@@ -246,10 +325,8 @@ def walabotGenerateTestingData():
     for i in range(10):
         print('Scanning fake face ' + str(i))
         fname = 'face_fake_' + str(i) + '.png'
-        fh.write(fname + ' 0\n')
         plt.imsave(os.path.join(basedir, fname), w.scan())
 
-    fh.close()
     del w
 
 def main():
@@ -278,7 +355,22 @@ def main():
 
 
 if __name__ == '__main__':
-    #walabotGenerateTestingData()
     w = WalabotFace()
-    w.render3d()
+    #w.collectBaseline()
+    # w.render3d()
+
+    while True:
+        print(w.recognize())
+        time.sleep(0.5)
+
+
+    # while True:
+    #     w.recognize()
+    #     time.sleep(0.5)
+
+    # while True:
+    #     s = w.scan()
+    #     a = np.reshape(s, w.scan().shape[0] * w.scan().shape[1])
+    #     print(a.sum())
+    # del w
 
